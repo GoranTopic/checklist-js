@@ -1,0 +1,29 @@
+{
+  "name": "checklist-js",
+  "version": "1.0.0",
+  "description": "A simple checklist to keep track of process in persistent memory",
+  "main": "Checklist.js",
+  "type": "module",
+  "scripts": {
+    "test": "mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GoranTopic/checklist-js.git"
+  },
+  "keywords": [
+    "checklist",
+    "progress",
+    "persistent-memory",
+    "datascraping"
+  ],
+  "author": "Goran Topic",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GoranTopic/checklist-js/issues"
+  },
+  "homepage": "https://github.com/GoranTopic/checklist-js#readme",
+  "dependencies": {
+    "files-js": "^1.0.0"
+  }
+}
