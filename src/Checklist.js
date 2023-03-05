@@ -1,26 +1,35 @@
-import { read_json, write_json, delete_json, mkdir } from 'files-js'
+import { read_json, write_json, 
+    delete_json, mkdir, file_exists } from 'files-js'
+import hash from 'object-hash';
+import tmp from 'tmp';
 
-// get data directory
-let data_directory =  process.cwd();
+let tmp_path = '/tmp/checklists';
 
 /* this class makes a checklist for value that need to be check,
  * it takes a check function whihc goes throught the values. */
 class Checklist{
     /* this function takes list of name name to check and */
-    constructor(values, options = { 
-        name: null, path: null, recalc_on_check: true 
-    }){
-        let { name, path, recalc_on_check } = options;
+    constructor(values, options = {}){
         // get options
+        let { name, path, recalc_on_check } = options;
+        // hash a new name based on the values
+        this._name = ( name ? name :  
+            hash(values, { unorderedArrays: true } )) + ".json"
+                // if custom path is not defined
+        if(path === undefined) // make a tmp folder
+            path = file_exists(tmp_path)? // if tmp dir does not exists
+                tmp_path : tmp.dirSync({ name: 'checklists' }).name
+        // set the directory path
+        this._dir_path = path;
+        // set _recalc_on_check to default 
+        this._recalc_on_check = 
+            (recalc_on_check === undefined || recalc_on_check === true)? 
+            true : false;
         //console.log(recalc_on_check)
-        // only for script
-        this.dir_path = path ?? data_directory + '/resources/checklists';
-        mkdir(this.dir_path);
+        //console.log(this._recalc_on_check)
         // if you want to mantain the original missing list of value after checks
-        this._recalc_on_check = options.recalc_on_check;
-        this._name = name + ".json";
-        this._filename = this.dir_path + '/' + this.name
-        this._checklist = read_json(this._filename);
+        this._filename = this._dir_path + '/' + this._name
+        this._checklist = read_json(this._filename) ?? {};
         this._values = values ?? [];
         this._missing_values = [];
         // make checklist
@@ -52,7 +61,7 @@ class Checklist{
          * this is used to handle args which might be an array */
         return ( arrayValue && 
             (typeof arrayValue === 'object') && 
-            (objValue.constructor === Array) );
+            (arrayValue.constructor === Array) );
     }
 
     _calcMissing = () => {
@@ -106,6 +115,12 @@ class Checklist{
         // write to disk
         return write_json(this._checklist, this._filename);
     }
+    
+    /* returns all key values */
+    getValues = () => this._values
+
+    /* returns length of all the values */
+    valuesCount = () => this._values.length
 
     _add = (value, overwrite = true) => {
         /* add a value as not done to the list
@@ -131,6 +146,25 @@ class Checklist{
         return true;
     }
 
+    _remove = value => {
+        /* removes the value from the list */
+        if(this._isObject(value)) value = JSON.stringify(value)
+        delete this._checklist[value];
+        this._calcMissing();
+        return write_json(this._checklist, this._filename);
+    }
+
+    remove = values => {
+        /* removes a list of values as not done to the list*/
+        // if passed an array
+        if(this._isArray(values))
+            for(let value of values)
+                this._remove(value);
+        else // single file
+            this._remove(values);
+        return true;
+    }
+
     isChecked = value => {
         /* Checks if all value has been already been checked off */
         if(this._isObject(value))
@@ -138,34 +172,27 @@ class Checklist{
         return this._checklist[value]
     }
 
-    /* returns all key values */
-    getValues = () => this._values
-
-    /* returns length of all the values */
-    valuesCount = () => this._values.length
-
     isDone = () =>
         /* checks if all the value on the checklist are done */
         Object.values(this._checklist).every(v => v)
 
-    remove = value => {
-        /* removes the value from the list */
-        if(this._isObject(value)) value = JSON.stringify(value)
-        delete this._checklist[value];
-        this._calcMissing();
-    }
-
     delete = () =>  {
         /* delete the checklist from disk*/
-        this._values = []
-        this._checklist = []
-        delete_json(this._filename)
+        this._values = [];
+        this._checklist = {};
+        this._missing_values = [];
+        delete_json(this._filename);
     }
 
-    toString = () => {
+    toString(){
         /* print the checklist */
-
+        Object.entries(this._checklist)
+            .reduce( (str, entry) => 
+        str + `${entry[1]} : ${entry[0]}\n`, ''
+            ).trim()
     }
+    log = this.toString
+    print = this.toString
 
 }
 
