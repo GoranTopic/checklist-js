@@ -1,6 +1,6 @@
 checklist-js
 =======
-#### A simple chekcklist for when you need to keep track of things presistetly
+#### A simple checklist for when you need to keep track of things presistetly
 
 ## Installation
 ```
