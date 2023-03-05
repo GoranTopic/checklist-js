@@ -3,7 +3,7 @@ import assert from 'assert';
 import chai from 'chai';
 const expect = chai.expect
 
-//slogan when you need to keep track of things persitetly
+//slogan: when you need to keep track of things persitetly
 
 // test adding values
 describe('basic functionality', () => {
@@ -25,6 +25,13 @@ describe('basic functionality', () => {
     it('valuesDone()', () => 
         assert.equal(checklist.valuesDone(), 1)
     )
+    // get checked values
+    it('getcheckedValues()', () => 
+        assert.deepEqual(
+            checklist.getCheckedValues(), 
+            values.filter(e => e === values[1])
+        )
+    )
     // get missing values
     it('getMissingValues()', () => 
         assert.deepEqual(
@@ -37,8 +44,8 @@ describe('basic functionality', () => {
         assert.equal(checklist.missingLeft(), 4)
     )
     // next missing()
-    it('nextMissing()', () => 
-        assert.equal(checklist.nextMissing(), values[0])
+    it('next()', () => 
+        assert.equal(checklist.next(), values[0])
     )
     // uncheck
     it('uncheck()', () => {
@@ -67,12 +74,15 @@ describe('basic functionality', () => {
     it('isDone()', () => 
         expect(checklist.isDone()).to.equal(false)
     )
+    // isNotDone
+    it('isDone()', () => 
+        expect(checklist.isNotDone()).to.equal(true)
+    )
     it('delete', () => { 
         checklist.delete();
         assert.deepEqual(checklist.getValues(), []);
     })
 });
-
 
 // hashing values 
 describe('hashing', () => {
@@ -94,7 +104,7 @@ describe('hashing', () => {
     })
 });
 
-// test adding values
+// test multiple values
 describe('adding and removing multiple values', () => {
     let values = [ '🥚 eggs', '🥩 ham', '🧀 cheese', '🍎 apple', '🥦 broccoli' ];
     let add_values = [ '🥓 bacon', '🍞 Bread', '🍆 Eggplant', '🥛 Milk']
@@ -114,9 +124,24 @@ describe('adding and removing multiple values', () => {
             values.concat(add_values).filter(e => !remove_values.includes(e))
         )
     })
+    it('check multiple', () => { 
+        checklist.check(
+            values.concat(add_values).filter(e => !remove_values.includes(e))
+        );
+        assert.equal(checklist.isDone(), true)
+    })
+    it('uncheck multiple', () => { 
+        checklist.uncheck(
+            values.concat(add_values).filter(e => !remove_values.includes(e))
+        );
+        assert.deepEqual( 
+            checklist.getMissingValues(), 
+            values.concat(add_values).filter(e => !remove_values.includes(e))
+        );
+    })
     it('delete', () => { 
         checklist.delete();
-        assert.deepEqual(checklist.nextMissing(), undefined);
+        assert.deepEqual(checklist.next(), undefined);
     })
 });
 
@@ -124,33 +149,33 @@ describe('adding and removing multiple values', () => {
 describe('finishing checklist', () => {
     let values = [ '🥚 eggs', '🥩 ham', '🧀 cheese', '🍎 apple', '🥦 broccoli' ];
     let checklist = new Checklist(values, { name: 'finishing_values'});
-    it('nextMissing()', () => { 
-        let value = checklist.nextMissing();
+    it('next()', () => { 
+        let value = checklist.next();
         checklist.check(value);
         assert.equal(value, values[0]);
     });
-    it('nextMissing()', () => { 
-        let value = checklist.nextMissing();
+    it('next()', () => { 
+        let value = checklist.next();
         checklist.check(value);
         assert.equal(value, values[1]);
     });
-    it('nextMissing()', () => { 
-        let value = checklist.nextMissing();
+    it('next()', () => { 
+        let value = checklist.next();
         checklist.check(value);
         assert.equal(value, values[2]);
     });
-    it('nextMissing()', () => { 
-        let value = checklist.nextMissing();
+    it('next()', () => { 
+        let value = checklist.next();
         checklist.check(value);
         assert.equal(value, values[3]);
     });
-    it('nextMissing()', () => { 
-        let value = checklist.nextMissing();
+    it('next()', () => { 
+        let value = checklist.next();
         checklist.check(value);
         assert.equal(value, values[4]);
     });
-    it('nextMissing()', () => { 
-        let value = checklist.nextMissing();
+    it('next()', () => { 
+        let value = checklist.next();
         checklist.check(value);
         assert.equal(value, undefined);
     });
@@ -159,7 +184,7 @@ describe('finishing checklist', () => {
     );
     it('delete', () => { 
         checklist.delete();
-        assert.deepEqual(checklist.nextMissing(), undefined);
+        assert.deepEqual(checklist.next(), undefined);
     })
 });
 
@@ -171,22 +196,22 @@ describe('recalc_on_check option', () => {
             name: 'recalc_on_check',
             recalc_on_check: false
         });
-        let value0 = checklist.nextMissing();
-        let value1 = checklist.nextMissing();
-        let value2 = checklist.nextMissing();
+        let value0 = checklist.next();
+        let value1 = checklist.next();
+        let value2 = checklist.next();
         checklist.check(value1);
-        it('nextMissing()', () => { 
-            let value = checklist.nextMissing();
+        it('next()', () => { 
+            let value = checklist.next();
             assert.equal(value, values[3]);
         });
-        it('nextMissing()', () => { 
+        it('next()', () => { 
             checklist.check(value2);
-            let value = checklist.nextMissing();
+            let value = checklist.next();
             assert.equal(value, values[4]);
         });
         it('delete', () => { 
             checklist.delete();
-            assert.deepEqual(checklist.nextMissing(), undefined);
+            assert.deepEqual(checklist.next(), undefined);
         })
     });
     describe('recalc_on_check is true', () => {
@@ -195,22 +220,22 @@ describe('recalc_on_check option', () => {
             name: 'recalc_on_check',
             recalc_on_check: true
         });
-        let value0 = checklist.nextMissing();
-        let value1 = checklist.nextMissing();
-        let value2 = checklist.nextMissing();
+        let value0 = checklist.next();
+        let value1 = checklist.next();
+        let value2 = checklist.next();
         checklist.check(value1);
-        it('nextMissing()', () => { 
-            let value = checklist.nextMissing();
+        it('next()', () => { 
+            let value = checklist.next();
             assert.equal(value, values[0]);
         });
-        it('nextMissing()', () => { 
+        it('next()', () => { 
             checklist.check(value2);
-            let value = checklist.nextMissing();
+            let value = checklist.next();
             assert.equal(value, values[0]);
         });
         it('delete', () => { 
             checklist.delete();
-            assert.deepEqual(checklist.nextMissing(), undefined);
+            assert.deepEqual(checklist.next(), undefined);
         })
     });
 });
@@ -257,8 +282,8 @@ describe('diffrent type of values', () => {
         assert.equal(checklist.missingLeft(), 4)
     )
     // next missing()
-    it('nextMissing()', () => 
-        assert.equal(checklist.nextMissing(), values[0])
+    it('next()', () => 
+        assert.equal(checklist.next(), values[0])
     )
     // uncheck
     it('uncheck()', () => {

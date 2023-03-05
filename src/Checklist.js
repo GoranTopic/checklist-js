@@ -76,6 +76,10 @@ class Checklist{
         })
     }
 
+    getCheckedValues = () =>
+        /* this function returns the checked values array */
+        this._values.filter(v => !this._missing_values.includes(v));
+
     valuesDone = () => 
         /* this function returns then number of values that have been checked */
         this._values.length - this._missing_values.length;
@@ -88,11 +92,19 @@ class Checklist{
         /* return the number of missing values left */
         this._missing_values.length
 
-    nextMissing = () =>
+    next = () =>
         /* returns the next missing values */
         this._missing_values.shift();
 
-    check = (value, mark = true) => {
+    check = (values, mark = true) => {
+        /* checks a list of values or a single value */
+        if(this._isArray(values)) // if passed an array
+            for(let value of values) this._check(value, mark);
+        else // single file
+            this._check(values, mark);
+    }
+
+    _check = (value, mark) => {
         /* checks a value on the list as done */
         // convert value to json
         if(this._isObject(value)) value = JSON.stringify(value)
@@ -104,7 +116,15 @@ class Checklist{
         return write_json(this._checklist, this._filename);
     }
 
-    uncheck = value => {
+    uncheck = values => {
+        /* unchecks a list of values or a single value */
+        if(this._isArray(values)) // if passed an array
+            for(let value of values) this._check(value);
+        else // single file
+            this._uncheck(values);
+    }
+
+    _uncheck = value => {
         /* unchecks a value on on the list which might have been done */
         // convert value to json
         if(this._isObject(value)) value = JSON.stringify(value)
@@ -175,6 +195,10 @@ class Checklist{
     isDone = () =>
         /* checks if all the value on the checklist are done */
         Object.values(this._checklist).every(v => v)
+
+    isNotDone = () =>
+        /* checks if some value on the checklist are is not done */
+        Object.values(this._checklist).some(v => v === false)
 
     delete = () =>  {
         /* delete the checklist from disk*/
