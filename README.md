@@ -185,52 +185,6 @@ true : 🥚 eggs
 */
 bobs_checklist.log()
  ```
- #### recover the checklist with the name option
-```javascript
-/* after crash or diffrent file*/
-const bobs_checklist = 
-  new Checklist([], { name: 'bobs shoppinglist' });
-  
-/*
-false : 🥦 broccoli 
-true : 🥩 ham
-true : 🥚 eggs
-*/
-bobs_checklist.log()
-
-const alices_checklist = 
-  new Checklist([], { name: 'alices shoppinglist' });
-  
-/*
-false : 🥦 broccoli 
-true : 🥩 ham
-true : 🥚 eggs
-*/
-bobs_checklist.log()
- ```
- #### recover the checklist with the name option
-```javascript
-/* after crash or diffrent file*/
-const bobs_checklist = 
-  new Checklist([], { name: 'bobs shoppinglist' });
-  
-/*
-false : 🥦 broccoli 
-true : 🥩 ham
-true : 🥚 eggs
-*/
-bobs_checklist.log()
-
-const alices_checklist = 
-  new Checklist([], { name: 'alices shoppinglist' });
-  
-/*
-false : 🥦 broccoli 
-true : 🥩 ham
-true : 🥚 eggs
-*/
-bobs_checklist.log()
- ```
 #### pass the path where to make the filesystem
 ```javascript 
   new Checklist([], { 
