@@ -1,6 +1,6 @@
 {
   "name": "checklist-js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple checklist to keep track of process in persistent memory",
   "main": "Checklist.js",
   "type": "module",
