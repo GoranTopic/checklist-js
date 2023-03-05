@@ -1,7 +1,7 @@
 {
   "name": "checklist-js",
   "version": "1.0.1",
-  "description": "A simple checklist to keep track of process in persistent memory",
+  "description": "A simple checklist for when you need to keep track of things presistetly",
   "main": "Checklist.js",
   "type": "module",
   "scripts": {
@@ -14,7 +14,9 @@
   "keywords": [
     "checklist",
     "progress",
-    "persistent-memory",
+    "memory",
+    "persistent",
+    "disk",
     "datascraping"
   ],
   "author": "Goran Topic",
