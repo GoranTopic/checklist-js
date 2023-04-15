@@ -9,7 +9,7 @@ let tmp_path = '/tmp/checklists';
  * it takes a check function whihc goes throught the values. */
 class Checklist{
     /* this function takes list of name name to check and */
-    constructor(values, options = {}){
+    constructor(values=[], options = {}){
         // get options
         let { name, path, recalc_on_check } = options;
         // hash a new name based on the values
