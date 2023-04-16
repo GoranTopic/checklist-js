@@ -14,7 +14,7 @@ describe('basic functionality', () => {
     });
     checklist.check(values[1])
     it('check(value)', () => {
-        let value = checklist._checklist[values[1]]
+        let value = checklist._checklist[JSON.stringify(values[1])]
         assert.equal(value , true)
     })
     // isChecked
@@ -188,6 +188,46 @@ describe('finishing checklist', () => {
     })
 });
 
+// keeping file object
+describe('check that it returns the object that it got as a input', () => {
+    let values = [ {'eggs': '🥚'}, ['🥩 ham', '🧀 cheese'], '🍎 apple', 100, 0.4 ];
+    let checklist = new Checklist([]);
+    it('return object', () => { 
+        checklist.add(values[0]);
+        let value = checklist.next();
+        checklist.check(value);
+        assert.deepEqual(value, values[0]);
+    });
+    it('return list', () => { 
+        checklist.add([values[1]]);
+        let value = checklist.next();
+        checklist.check([value]);
+        assert.deepEqual(value, values[1]);
+    });
+    it('return string', () => { 
+        checklist.add(values[2]);
+        let value = checklist.next();
+        checklist.check(value);
+        assert.deepEqual(value, values[2]);
+    });
+    it('return int', () => { 
+        checklist.add(values[3]);
+        let value = checklist.next();
+        checklist.check(value);
+        assert.deepEqual(value, values[3]);
+    });
+    it('return float', () => { 
+        checklist.add(values[4]);
+        let value = checklist.next();
+        checklist.check(value);
+        assert.deepEqual(value, values[4]);
+    });
+    it('delete', () => { 
+        checklist.delete();
+        assert.deepEqual(checklist.next(), undefined);
+    })
+});
+
 // test recalc on check
 describe('recalc_on_check option', () => {
     describe('recalc_on_check is false', () => {
@@ -240,9 +280,6 @@ describe('recalc_on_check option', () => {
     });
 });
 
-// TODO: retain the file structure in the checklist
-// test difrent types of values in input value array
-/*
 describe('diffrent type of values', () => {
     let values = [ 
         'string',  // string
@@ -317,5 +354,4 @@ describe('diffrent type of values', () => {
         assert.deepEqual(checklist.getValues(), []);
     })
 });
-*/
 
