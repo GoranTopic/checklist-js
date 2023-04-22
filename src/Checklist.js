@@ -217,16 +217,35 @@ class Checklist{
         delete_json(this._filename);
     }
 
-    toString(){
+    // function to print the checklist
+    toString({true_emoji = '✅', false_emoji = '❌'} = {}){
         /* print the checklist */
+        // string to return
+        let str = '';
+        // get the longest key from the checklist
+        let longestKey = Object.keys(this._checklist)
+            .reduce((a, b) => a.length > b.length ? a : b)
+        .length;
+        // loop through the checklist
         Object.entries(this._checklist)
-            .reduce( (str, entry) => 
-        str + `${entry[1]} : ${entry[0]}\n`, ''
-            ).trim()
+            .forEach( entry => {
+                // get the key and value
+                let [ key, value ] = entry;
+                // add padding to the key 
+                str += `${key.padEnd(longestKey)}: ` + `${
+                    // if the value is true, add the true emoji
+                    value === true? true_emoji :
+                    // if the value is false, add the false emoji
+                    value === false? false_emoji : 
+                    // else print the value
+                    value}` + 
+                    `\n`;
+            })
+        return str;
     }
-    log = this.toString
-    print = this.toString
 
+    log = () => console.log(this.toString())
+    print = () => console.log(this.toString())
 }
 
 export default Checklist;

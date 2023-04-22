@@ -280,3 +280,49 @@ describe('recalc_on_check option', () => {
     });
 });
 
+// test printing and logging
+describe('test printing and logging', () => {
+    let values = [ '🥚 eggs', '🥩 ham', '🧀 cheese', '🍎 apple', '🥦 broccoli' ];
+    let checklist = new Checklist(values, { 
+        name: 'print_and_log',
+    });
+    // check that the toString() method works
+    let value0 = checklist.next();
+    let value1 = checklist.next();
+    let value2 = checklist.next();
+    let value3 = checklist.next();
+    checklist.check(value0);
+    checklist.check(value1, "ham");
+    checklist.check(value2, {obj: "cheese"});
+    checklist.check(value3, 12);
+    //console.log(checklist.toString());
+    it('toString()', () => { 
+        let str = checklist.toString();
+        // split by line
+        str.split('\n')
+            .forEach((entry, index) => {
+                let [ key, value ] = entry.split(':');
+                if(value){
+                    value = value.trim();
+                    if (index == 0) {  
+                        assert.equal(value, '✅');
+                    } else if (index == 1) {
+                        assert.equal(value, "ham");
+                    } else if (index == 2) {
+                        assert.equal(value, "[object Object]");
+                    } else if (index == 3) {
+                        assert.equal(value, '12')
+                    } else if (index == 4) {
+                        assert.equal(value, '❌');
+                    }
+                }
+            });
+    });
+    // delete the checklist
+    it('delete', () => { 
+        checklist.delete();
+        assert.deepEqual(checklist.next(), undefined);
+    })
+});
+
+
