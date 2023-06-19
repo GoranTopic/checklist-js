@@ -10,15 +10,15 @@ describe('basic functionality', () => {
     let values = [ '🥚 eggs', '🥩 ham', '🧀 cheese', '🍎 apple', '🥦 broccoli' ];
     let other_values = [ '🥓 bacon' ];
     let checklist = new Checklist(values, { 
-        //name: 'basic_functionality',
+        name: 'basic_functionality',
     });
     checklist.check(values[1])
     it('check(value)', () => {
-        let value = checklist._checklist[JSON.stringify(values[1])]
+        let value = checklist._checklist.get(JSON.stringify(values[1]))
         assert.equal(value , true)
     })
     // isChecked
-    it('uncheck()', () => 
+    it('isCheck()', () => 
         assert.equal(checklist.isChecked(values[1]), true)
     )
     // values done
@@ -26,19 +26,19 @@ describe('basic functionality', () => {
         assert.equal(checklist.valuesDone(), 1)
     )
     // get checked values
-    it('getcheckedValues()', () => 
+    it('getcheckedValues()', () => {
         assert.deepEqual(
             checklist.getCheckedValues(), 
             values.filter(e => e === values[1])
         )
-    )
+    })
     // get missing values
-    it('getMissingValues()', () => 
-        assert.deepEqual(
-            checklist.getMissingValues(), 
+    it('getMissingValues()', () => {
+        assert.deepEqual( 
+            checklist.getMissingValues(),
             values.filter(e => e !== values[1])
         )
-    )
+    })
     // missing left()
     it('missingLeft()', () => 
         assert.equal(checklist.missingLeft(), 4)
@@ -75,7 +75,7 @@ describe('basic functionality', () => {
         expect(checklist.isDone()).to.equal(false)
     )
     // isNotDone
-    it('isDone()', () => 
+    it('isNotDone()', () => 
         expect(checklist.isNotDone()).to.equal(true)
     )
     it('delete', () => { 
@@ -100,7 +100,7 @@ describe('hashing', () => {
     })
     it('delete', () => { 
         checklist.delete();
-        assert.deepEqual(checklist.isChecked(values[1]), null);
+        assert.deepEqual(checklist.getValues(), []);
     })
 });
 
@@ -325,4 +325,28 @@ describe('test printing and logging', () => {
     })
 });
 
-
+// test printing and logging
+describe('test ability to process a ludicrous amount of items, if this stalls then it did not pass', () => {
+    // make an array with a 10 million items with the string of each number
+    let values;
+    let checklist;
+    before('Making an Array of 10 million items', function(done) {
+        this.timeout(10000);
+        // set a hook-level timeout
+        values = Array(1000 * 1000 * 100).fill().map((_, i) => i.toString());
+        done()
+    })
+    // make a checklist with the array
+    it('making a checklist of 10 million should take less than 10 seconds', function(done) {
+        // set a test-level timeout
+        this.timeout(100);
+        //setTimeout(done, 150);
+        checklist = new Checklist(values, { name: 'ludicrous amount of items' });
+        done()
+    })
+    // delete the checklist
+    it('delete', () => { 
+        //checklist.delete();
+        //assert.deepEqual(checklist.next(), undefined);
+    })
+});
