@@ -14,10 +14,8 @@ class Checklist{
         // get options
         let { name, path, recalc_on_check } = options;
         // hash a new name based on the values
-        console.log('hashing...')
         this._name = ( name ? name :  
             hash(values, { unorderedArrays: true } )) + ".json"
-        console.log('done')
         // if custom path is not defined
         if(path === undefined) // make a tmp folder
             path = file_exists(tmp_path)? // if tmp dir does not exists
@@ -31,7 +29,6 @@ class Checklist{
         // if you want to mantain the original missing list of value after checks
         this._filename = this._dir_path + '/' + this._name
         // try to read the file from memeory
-        console.log('found file', this._filename)
         try{  // get the chek list form meemory
             let string_file = fs.readFileSync(this._filename);
             let json = JSON.parse(string_file);

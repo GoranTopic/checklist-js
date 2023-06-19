@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "mocha"
+    "test": "node --max-old-space-size=8192 node_modules/mocha/bin/_mocha"
   },
   "repository": {
     "type": "git",
