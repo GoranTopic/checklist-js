@@ -12,7 +12,11 @@ class Checklist{
     /* this function takes list of  name to check and */
     constructor(values=[], options = {}){
         // get options
-        let { name, path, recalc_on_check } = options;
+        let { name, path, recalc_on_check, save_every_check  } = options;
+        // set the save_every_check
+        this.check_call_count = 0;
+        // save every 1 checks
+        this.save_every_check = save_every_check ?? 1;
         // hash a new name based on the values
         this._name = ( name ? name :  
             hash(values, { unorderedArrays: true } )) + ".json"
@@ -43,8 +47,10 @@ class Checklist{
         this._missing_values = [];
         // if checklist is empty, add values to it
         if(this._checklist.size === 0)
-            for(let value of this._values)
+            for(let value of this._values){
+                //console.log('adding', value)
                 this._checklist.set(JSON.stringify(value), false);
+        }
         else // if the cheklist is not empty, get the values from it
             this._values = Array.from( this._checklist.keys() )
                 .map( JSON.parse ); 
@@ -115,6 +121,7 @@ class Checklist{
 
     check = (values, mark = true) => {
         /* checks a list of values or a single value */
+        this.check_call_count++
         if(this._isArray(values)) // if passed an array
             for(let value of values) this._check(value, mark);
         else // single file
@@ -131,7 +138,8 @@ class Checklist{
         // recalcuate the missing value 
         if(this._recalc_on_check) this._calcMissing();
         // write to disk
-        return this._saveChecklist();
+        if(this.check_call_count % this.save_every_check === 0)
+            this._saveChecklist();
     }
 
     uncheck = values => {

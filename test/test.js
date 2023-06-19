@@ -330,19 +330,41 @@ describe('test ability to process a ludicrous amount of items', () => {
     // make an array with a 10 million items with the string of each number
     let values;
     let checklist;
+    let maximun = Math.pow(2,24);
     before('Making an Array of 10 million items', function(done) {
         this.timeout(10000);
         // set a hook-level timeout
-        values = Array(Math.pow(2,24)).fill().map((_, i) => i.toString());
-        done()
+        values = Array(maximun).fill().map((_, i) => i.toString());
+        done();
     })
     // make a checklist with the array
     it('making a checklist of 10 million should take less than 200645ms', function(done) {
         // set a test-level timeout
         this.timeout(200645);
         //setTimeout(done, 150);
-        checklist = new Checklist(values, { name: 'ludicrous amount of items' });
-        done()
+        checklist = new Checklist(values, { 
+            name: 'ludicrous amount of items',
+            recalc_on_check: false,
+            save_every_check: 5,
+        });
+        done();
+    })
+    // check some values with array
+    it('Checking without saving', function(done) {
+        this.timeout(100);
+        // get a random value between 0 and maximun
+        checklist.check(values[Math.floor(Math.random() * maximun)]);
+        checklist.check(values[Math.floor(Math.random() * maximun)]);
+        checklist.check(values[Math.floor(Math.random() * maximun)]);
+        checklist.check(values[Math.floor(Math.random() * maximun)]);
+        done();
+    })
+    // check so
+    it('Checking an item with saving', function(done) {
+        this.timeout(10 * 1000);
+        // get a random value between 0 and maximun
+        checklist.check(values[Math.floor(Math.random() * maximun)]);
+        done();
     })
     // delete the checklist
     it('delete', () => { 

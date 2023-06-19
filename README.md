@@ -195,7 +195,9 @@ bobs_checklist.log()
  ```
 ### Recalculate missing values on Check
 #### sometime when you are working with multiple concurrent processes you don't want the completion of one process to alter the order you would get the missing vlaue
-#### this cna leat to a missing value being drawn twice after a check. for this senarios you can set the option recalc_on_check to false
+#### this can lead to a missing values being drawn twice after a check. 
+#### There is also the senario where you have too many values and doing recalc on every check will take too long
+#### For this senarios you can set the option recalc_on_check to false
 #### pass the path where to make the filesystem
 ```javascript 
   new Checklist([], { 
