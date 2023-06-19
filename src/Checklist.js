@@ -1,5 +1,6 @@
-import { read_json, write_json, 
+import { read_json, write_json, read_file, 
     delete_json, mkdir, file_exists } from 'files-js'
+import fs from 'fs';
 import hash from 'object-hash';
 import tmp from 'tmp';
 
@@ -13,8 +14,10 @@ class Checklist{
         // get options
         let { name, path, recalc_on_check } = options;
         // hash a new name based on the values
+        console.log('hashing...')
         this._name = ( name ? name :  
             hash(values, { unorderedArrays: true } )) + ".json"
+        console.log('done')
         // if custom path is not defined
         if(path === undefined) // make a tmp folder
             path = file_exists(tmp_path)? // if tmp dir does not exists
@@ -25,27 +28,41 @@ class Checklist{
         this._recalc_on_check = 
             (recalc_on_check === undefined || recalc_on_check === true)? 
             true : false;
-        //console.log(recalc_on_check)
-        //console.log(this._recalc_on_check)
         // if you want to mantain the original missing list of value after checks
         this._filename = this._dir_path + '/' + this._name
-        this._checklist = read_json(this._filename) ?? {};
+        // try to read the file from memeory
+        console.log('found file', this._filename)
+        try{  // get the chek list form meemory
+            let string_file = fs.readFileSync(this._filename);
+            let json = JSON.parse(string_file);
+            this._checklist = new Map(json);
+        }catch(e){ // otherwise make a new checklist
+            this._checklist = new Map();
+        }
+        // set the values, if passed
         this._values = values ?? [];
+        // missing value are empty
+        // until the are calcualted with this._calcMissing()
         this._missing_values = [];
-        // make checklist
-        if(!this._checklist){
-            this._checklist = {};
-            for(let value of this._values){
-                let key = JSON.stringify(value)
-                this._checklist[key] = false
-            }
-        }else // if we found checklist in memory
-            this._values = Object.keys(this._checklist)
-                .map(JSON.parse); 
+        // if checklist is empty, add values to it
+        if(this._checklist.size === 0)
+            for(let value of this._values)
+                this._checklist.set(JSON.stringify(value), false);
+        else // if the cheklist is not empty, get the values from it
+            this._values = Array.from( this._checklist.keys() )
+                .map( JSON.parse ); 
         // calculate the missing values
         this._calcMissing();
         // save new checklist
-        write_json(this._checklist, this._filename);
+        this._saveChecklist();
+    }
+
+    _saveChecklist = () => { 
+        return fs.writeFileSync(this._filename, 
+            JSON.stringify(
+                Array.from( this._checklist.entries() )
+            )
+        )
     }
 
     _isObject = objValue => {
@@ -67,11 +84,14 @@ class Checklist{
     _calcMissing = () => {
         /* this inner function recalcuates the missing values from the checklist */
         this._missing_values = [];
-        this._values = Object.keys(this._checklist)
-            .map(JSON.parse);
+        // get the values from the checklist
+        this._values = Array.from(this._checklist.keys()).map(JSON.parse);
+        // check each value
         this._values.forEach( value => {
+            // convert value to string
             let key = JSON.stringify(value);
-            if(! this._checklist[key] )
+            //console.log(this._checklist.get(key))
+            if( this._checklist.get(key) === false )
                 this._missing_values.push(value)
         })
     }
@@ -110,17 +130,17 @@ class Checklist{
         // convert value to json
         let key = JSON.stringify(value)
         // check with mark
-        this._checklist[key] = mark;
+        this._checklist.set(key, mark);
         // recalcuate the missing value 
         if(this._recalc_on_check) this._calcMissing();
         // write to disk
-        return write_json(this._checklist, this._filename);
+        return this._saveChecklist();
     }
 
     uncheck = values => {
         /* unchecks a list of values or a single value */
         if(this._isArray(values)) // if passed an array
-            for(let value of values) this._check(value);
+            for(let value of values) this._uncheck(value);
         else // single file
             this._uncheck(values);
     }
@@ -129,13 +149,13 @@ class Checklist{
         /* unchecks a value on on the list which might have been done */
         if(value === undefined || value === null) return;
         // convert value to json
-        let key = JSON.stringify(value)
+        let key = JSON.stringify(value);
         // uncheck with the value
-        this._checklist[key] = false;
+        this._checklist.set(key, false);
         // recalcuate the missing value 
         if(this._recalc_on_check) this._calcMissing();
         // write to disk
-        return write_json(this._checklist, this._filename);
+        return this._saveChecklist();
     }
     
     /* returns all key values */
@@ -149,14 +169,14 @@ class Checklist{
          * if overwrite is true, it writes over any truely value */
         if(value === undefined || value === null) return;
         // convert value to json
-        let key = JSON.stringify(value)
+        let key = JSON.stringify(value);
         // if it is not in the list, or overwrite is true
-        if(!this._checklist[key] || overwrite)
-            this._checklist[key] = false;
+        if(!this._checklist.has(key) || overwrite)
+            this._checklist.set(key, false);
         // recalcuate the missing values
         this._calcMissing();
         // save to disk
-        return write_json(this._checklist, this._filename);
+        return this._saveChecklist();
     }
 
     add = (values, overwrite = true) => {
@@ -177,11 +197,11 @@ class Checklist{
         // convert value to json
         let key = JSON.stringify(value)
         // remove the value from the list
-        delete this._checklist[key];
+        this._checklist.delete(key);
         //  recalcuate the missing values
         this._calcMissing();
         // save to disk
-        return write_json(this._checklist, this._filename);
+        return this._saveChecklist();
     }
 
     remove = values => {
@@ -197,24 +217,25 @@ class Checklist{
 
     isChecked = value => {
         /* Checks if all value has been already been checked off */
-        let key = JSON.stringify(value)
-        return this._checklist[key]
+        let key = JSON.stringify(value);
+        return this._checklist.get(key);
     }
 
     isDone = () =>
         /* checks if all the value on the checklist are done */
-        Object.values(this._checklist).every(v => v)
+        Array.from(this._checklist.values()).every(v => v)
 
     isNotDone = () =>
         /* checks if some value on the checklist are is not done */
-        Object.values(this._checklist).some(v => v === false)
+        Array.from(this._checklist.values()).some(v => v === false)
 
     delete = () =>  {
         /* delete the checklist from disk*/
         this._values = [];
-        this._checklist = {};
+        this._checklist.clear();
+        this._checklist = null;
         this._missing_values = [];
-        delete_json(this._filename);
+        fs.unlinkSync(this._filename);
     }
 
     // function to print the checklist
@@ -223,11 +244,11 @@ class Checklist{
         // string to return
         let str = '';
         // get the longest key from the checklist
-        let longestKey = Object.keys(this._checklist)
+        let longestKey = Array.from(this._checklist.keys())
             .reduce((a, b) => a.length > b.length ? a : b)
         .length;
         // loop through the checklist
-        Object.entries(this._checklist)
+        Array.from(this._checklist.entries())
             .forEach( entry => {
                 // get the key and value
                 let [ key, value ] = entry;
