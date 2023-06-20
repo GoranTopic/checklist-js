@@ -1,6 +1,6 @@
 {
   "name": "checklist-js",
-  "version": "1.1.8",
+  "version": "1.1.9",
   "description": "A simple checklist for when you need to keep track of things presistetly",
   "main": "index.js",
   "type": "module",
