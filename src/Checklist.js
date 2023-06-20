@@ -68,6 +68,8 @@ class Checklist{
         )
     }
 
+    save = () => this._saveChecklist();
+
     _isObject = objValue => {
         /* this inner function check if paramter is a js object 
          * this is used to handle values which are not objects */
