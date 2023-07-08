@@ -49,7 +49,7 @@ checklist.isChecked('🥚 eggs') // true
   '🥦 broccoli',
 ]*/
 checklist.getMissingValues();
-checklist.getMissingLeft(); // 4
+checklist.missingLeft(); // 4
 
 /*[ 
   '🥩 ham',
