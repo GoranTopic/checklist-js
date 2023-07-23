@@ -4,8 +4,15 @@ import fs from 'fs';
 import hash from 'object-hash';
 import tmp from 'tmp';
 import osPath from 'path';
+import os from 'os';
 
-let tmp_path = '/tmp/checklists';
+// if it is windows, set the tmp path to the user temp folder
+if(os.platform() === 'win32') tmp_path = os.tmpdir();
+// if it is on linux, set the tmp path to /tmp/checklists
+else if(os.platform() === 'linux') tmp_path = '/tmp/checklists';
+// if it is on mac, set the tmp path to /tmp/checklists
+else if(os.platform() === 'darwin') tmp_path = '/tmp/checklists';
+
 
 /* this class makes a checklist for value that need to be check,
  * it takes a check function which goes throught the values. */
