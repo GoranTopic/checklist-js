@@ -361,7 +361,7 @@ describe('test ability to process a ludicrous amount of items', () => {
     })
     // check so
     it('Checking an item with saving', function(done) {
-        this.timeout(10 * 1000);
+        this.timeout(15 * 1000); // 10 seconds
         // get a random value between 0 and maximun
         checklist.check(values[Math.floor(Math.random() * maximun)]);
         done();

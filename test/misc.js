@@ -2,6 +2,7 @@ import Checklist from '../index.js'
 import assert from 'assert';
 import chai from 'chai';
 const expect = chai.expect
+import tmp from 'tmp';
 
 describe('return 0 when there are no done values', () => {
     let values = [ '🥚 eggs', '🥩 ham', '🧀 cheese', '🍎 apple', '🥦 broccoli' ];

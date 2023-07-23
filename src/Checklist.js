@@ -3,8 +3,17 @@ import { read_json, write_json, read_file,
 import fs from 'fs';
 import hash from 'object-hash';
 import tmp from 'tmp';
+import osPath from 'path';
+import os from 'os';
 
-let tmp_path = '/tmp/checklists';
+let tmp_path = '';
+// if it is windows, set the tmp path to the user temp folder
+if(os.platform() === 'win32') tmp_path = os.tmpdir();
+// if it is on linux, set the tmp path to /tmp/checklists
+else if(os.platform() === 'linux') tmp_path = '/tmp/checklists';
+// if it is on mac, set the tmp path to /tmp/checklists
+else if(os.platform() === 'darwin') tmp_path = '/tmp/checklists';
+
 
 /* this class makes a checklist for value that need to be check,
  * it takes a check function which goes throught the values. */
@@ -23,7 +32,7 @@ class Checklist{
         // if custom path is not defined
         if(path === undefined) // make a tmp folder
             path = file_exists(tmp_path)? // if tmp dir does not exists
-                tmp_path : tmp.dirSync({ name: 'checklists' }).name
+                tmp_path : tmp.dirSync({ prefix: 'checklists' }).name
         // set the directory path
         this._dir_path = path;
         // set _recalc_on_check to default 
@@ -31,7 +40,7 @@ class Checklist{
             (recalc_on_check === undefined || recalc_on_check === true)? 
             true : false;
         // if you want to mantain the original missing list of value after checks
-        this._filename = this._dir_path + '/' + this._name
+        this._filename = osPath.join( this._dir_path, this._name);
         // try to read the file from memeory
         try{  // get the chek list form meemory
             let string_file = fs.readFileSync(this._filename);
