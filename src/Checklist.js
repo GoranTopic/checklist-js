@@ -57,7 +57,7 @@ class Checklist{
         if(this._checklist.size === 0)
             for(let value of this._values){
                 //console.log('adding', value)
-                this._checklist.set(JSON.stringify(value), false);
+                this._checklist.set( JSON.stringify(value), false );
         }
         else // if the cheklist is not empty, get the values from it
             this._values = Array.from( this._checklist.keys() )
@@ -148,7 +148,7 @@ class Checklist{
         // recalcuate the missing value 
         if(this._recalc_on_check) this._calcMissing();
         // write to disk
-        if(this.check_call_count % this.save_every_check === 0)
+        if(this.check_call_count % this.save_every_check === 0 || this._missing_values.length === 0)
             this._saveChecklist();
     }
 
