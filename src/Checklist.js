@@ -25,10 +25,11 @@ class Checklist{
             path, // path to save the checklist at
             recalc_on_check, // recalcuate the missing values on check
             save_every_check, // save the checklist every n checks
-            unique, // if true act as a set and only add unique values
             enqueue, // if false, do not add missing values to the end of the list
             shuffle, // if true, shuffle the values before checking
         } = options;
+        // set the enqueue
+        this.enqueue = enqueue ? true : false;
         // set the save_every_check
         this.check_call_count = 0;
         // save every 1 checks
@@ -138,9 +139,14 @@ class Checklist{
         /* return the number of missing values left */
         this._missing_values.length
 
-    next = () =>
+    next = () => {
         /* returns the next missing values */
-        this._missing_values.shift();
+        let value = this._missing_values.shift();
+        // add to the need of the _missing_values
+        if(this.enqueue) this._missing_values.push(value);
+        // return the value 
+        return value
+    }
 
     check = (values, mark = true) => {
         /* checks a list of values or a single value */
