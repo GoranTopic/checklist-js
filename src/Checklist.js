@@ -14,18 +14,28 @@ else if(os.platform() === 'linux') tmp_path = '/tmp/';
 // if it is on mac, set the tmp path to /tmp/checklists
 else if(os.platform() === 'darwin') tmp_path = '/tmp/';
 
-
 /* this class makes a checklist for value that need to be check,
  * it takes a check function which goes throught the values. */
 class Checklist{
     /* this function takes list of  name to check and */
     constructor(values=[], options = {}){
         // get options
-        let { name, path, recalc_on_check, save_every_check  } = options;
+        let { 
+            name, // name of the checklist to save
+            path, // path to save the checklist at
+            recalc_on_check, // recalcuate the missing values on check
+            save_every_check, // save the checklist every n checks
+            unique, // if true act as a set and only add unique values
+            enqueue, // if false, do not add missing values to the end of the list
+            shuffle, // if true, shuffle the values before checking
+        } = options;
         // set the save_every_check
         this.check_call_count = 0;
         // save every 1 checks
         this.save_every_check = save_every_check ?? 1;
+        // shuffle values if it is enabled
+        if(shuffle)
+            values = [ ...values].sort(() => Math.random() - 0.5);
         // hash a new name based on the values
         this._name = ( name ? name :  
             hash(values, { unorderedArrays: true } )) + ".json"
@@ -41,10 +51,13 @@ class Checklist{
         // if you want to mantain the original missing list of value after checks
         this._filename = osPath.join( this._tmp_path, this._name);
         // try to read the file from memeory
-        try{  // get the chek list form meemory
+        try{  // get the check list form memory
             let string_file = fs.readFileSync(this._filename);
-            let json = JSON.parse(string_file);
-            this._checklist = new Map(json);
+            let json_list = JSON.parse(string_file);
+            // shuffe if is enabled
+            if(shuffle) 
+                json_list = [ ...json_list].sort(() => Math.random() - 0.5);
+            this._checklist = new Map(json_list);
         }catch(e){ // otherwise make a new checklist
             this._checklist = new Map();
         }
@@ -58,7 +71,7 @@ class Checklist{
             for(let value of this._values){
                 //console.log('adding', value)
                 this._checklist.set( JSON.stringify(value), false );
-        }
+            }
         else // if the cheklist is not empty, get the values from it
             this._values = Array.from( this._checklist.keys() )
                 .map( JSON.parse ); 
