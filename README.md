@@ -230,4 +230,23 @@ checklist.unchek('🧀 cheese')
 checklist.uncheck([ '🍆 Eggplant', '🍎 apple' , '🥦 broccoli'])
 
 ```
+OPTIONS 
+====
+# All options 
+```javascript
+new Checklist( valus, {
+        name, // name of the checklist to save
+
+        path, // path to save the checklist at
+
+        recalc_on_check, // recalcuate the missing values on check
+        
+        save_every_check, // save the checklist every n checks
+
+        enqueue, // if false, do not add missing values to the end of the list
+
+        shuffle, // if true, shuffle the values before checking
+        })
+```
+
 
