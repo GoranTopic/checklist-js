@@ -49,7 +49,6 @@ class Checklist{
             this._checklist = new Map();
         }
 
-
         // set the values, if passed
         this._values = values ?? [];
         // missing value are empty
