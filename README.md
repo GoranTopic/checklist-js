@@ -246,6 +246,8 @@ new Checklist( valus, {
         enqueue, // if false, do not add missing values to the end of the list
 
         shuffle, // if true, shuffle the values before checking
+
+        save // if false, Checklist has not presistense. it does not save to disk, default true
         })
 ```
 
