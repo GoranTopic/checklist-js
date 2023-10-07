@@ -31,6 +31,9 @@ class Checklist{
         this.enqueue = enqueue === undefined ? true : enqueue;
         // set the save default is true
         this.save = save === undefined ? true : save;
+        // set recalc_on_check
+        // set _recalc_on_check to default to false
+        this._recalc_on_check = recalc_on_check === undefined ? false : recalc_on_check;
         // set the save_every_check
         this.check_call_count = 0;
         // save every 1 checks
@@ -46,11 +49,7 @@ class Checklist{
             this._tmp_path = tmp_path
         else // set the directory path
             this._tmp_path = path
-        // set _recalc_on_check to default 
-        this._recalc_on_check = 
-            (recalc_on_check === undefined || recalc_on_check === true)? 
-            true : false;
-        // if you want to mantain the original missing list of value after checks
+                // if you want to mantain the original missing list of value after checks
         this._filename = osPath.join( this._tmp_path, this._name);
         // try to read the file from memeory
         try{  // get the check list form memory
