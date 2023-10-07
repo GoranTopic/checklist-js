@@ -2,9 +2,9 @@ import { read_json, write_json, read_file,
     delete_json, mkdir, file_exists } from 'files-js'
 import fs from 'fs';
 import hash from 'object-hash';
-import tmp from 'tmp';
 import osPath from 'path';
 import os from 'os';
+
 
 let tmp_path = '';
 // if it is windows, set the tmp path to the user temp folder
