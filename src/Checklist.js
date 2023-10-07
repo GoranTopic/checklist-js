@@ -1,8 +1,5 @@
-import { read_json, write_json, read_file, 
-    delete_json, mkdir, file_exists } from 'files-js'
 import fs from 'fs';
 import hash from 'object-hash';
-import tmp from 'tmp';
 import osPath from 'path';
 import os from 'os';
 
@@ -82,7 +79,7 @@ class Checklist{
         this._saveChecklist();
     }
 
-    _saveChecklist = () => { 
+    _saveChecklist = entry => { 
         return fs.writeFileSync(this._filename, 
             JSON.stringify(
                 Array.from( this._checklist.entries() )
