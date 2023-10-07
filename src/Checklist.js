@@ -25,9 +25,12 @@ class Checklist{
             save_every_check, // save the checklist every n checks
             enqueue, // if false, do not add missing values to the end of the list
             shuffle, // if true, shuffle the values before checking
+            save // if true, save the checklist to disk
         } = options;
         // set the enqueue
-        this.enqueue = enqueue ? true : false;
+        this.enqueue = enqueue === undefined ? true : enqueue;
+        // set the save default is true
+        this.save = save === undefined ? true : save;
         // set the save_every_check
         this.check_call_count = 0;
         // save every 1 checks
@@ -81,6 +84,8 @@ class Checklist{
     }
 
     _saveChecklist = () => { 
+        /* this inner function saves the checklist to disk */
+        if(!this.save) return;
         return fs.writeFileSync(this._filename, 
             JSON.stringify(
                 Array.from( this._checklist.entries() )
