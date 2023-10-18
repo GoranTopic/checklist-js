@@ -1,16 +1,11 @@
 import isArray from './utils/isArray.js';
+import parsePath from './utils/parsePath.js';
+import Store from './store/Store.js';
 import fs from 'fs';
 import hash from 'object-hash';
 import osPath from 'path';
 import os from 'os';
 
-let tmp_path = '';
-// if it is windows, set the tmp path to the user temp folder
-if(os.platform() === 'win32') tmp_path = os.tmpdir();
-// if it is on linux, set the tmp path to /tmp/checklists
-else if(os.platform() === 'linux') tmp_path = '/tmp/';
-// if it is on mac, set the tmp path to /tmp/checklists
-else if(os.platform() === 'darwin') tmp_path = '/tmp/';
 
 /* this class makes a checklist for value that need to be check,
  * it takes a check function which goes throught the values. */
@@ -19,90 +14,52 @@ class Checklist{
     constructor(values=[], options = {}){
         // get options
         let { 
-            name, // name of the checklist to save
-            path, // path to save the checklist at
-            recalc_on_check, // recalcuate the missing values on check
-            save_every_check, // save the checklist every n checks
-            enqueue, // if false, do not add missing values to the end of the list
-            shuffle, // if true, shuffle the values before checking
-            save // if true, save the checklist to disk
+            tag, // this is a tag to identify the checklist, 
+            // if none is passed create one by hashing the values
+            // this is tipicaly stores as the filename
+            path, // path to save the checklist, 
+            // if it has the filename, it will be in the specified path, witl the file name 
+            // and the path will not be checked
+            recalc_on_check, //recalcuate the missing values on check
+            // this options will put the missing value on the front of the list every
+            // a value is checked. default is false.
+            // this function if for special cases where you need to check a value
+            // in a certain order
+            type, // this can either be a 'list', or a 'queue' when getting the missing values out
+            // this will put the values gotter from next() to the end of the list
+            // while list will not put the values back and one need to rerun the checklist
+            // to get the missing values again. Default is 'queue'
+            shuffle, // if true, shuffle the values in checklist
+            persist, // if true, save the checklist to disk
         } = options;
-        // set the enqueue
-        this.enqueue = enqueue === undefined ? true : enqueue;
-        // set the save default is true
-        this.save = save === undefined ? true : save;
-        // set recalc_on_check
-        // set _recalc_on_check to default to false
-        this._recalc_on_check = recalc_on_check === undefined ? false : recalc_on_check;
-        // set the save_every_check
-        this.check_call_count = 0;
-        // save every 1 checks
-        this.save_every_check = save_every_check ?? 1;
-        // shuffle values if it is enabled
-        if(shuffle)
-            values = [ ...values].sort(() => Math.random() - 0.5);
-        // hash a new name based on the values
-        this._name = ( name ? name :  
-            hash(values, { unorderedArrays: true } )) + ".json"
-        // if custom path is not defined
-        if(path === undefined) // make a tmp folder
-            this._tmp_path = tmp_path
-        else // set the directory path
-            this._tmp_path = path
-                // if you want to mantain the original missing list of value after checks
-        this._filename = osPath.join( this._tmp_path, this._name);
-        // try to read the file from memeory
-        try{  // get the check list form memory
-            let string_file = fs.readFileSync(this._filename);
-            let json_list = JSON.parse(string_file);
-            // shuffe if is enabled
-            if(shuffle) 
-                json_list = [ ...json_list].sort(() => Math.random() - 0.5);
-            this._checklist = new Map(json_list);
-        }catch(e){ // otherwise make a new checklist
-            this._checklist = new Map();
+        // set default values
+        this.type = (type === 'list') ? 'list' : 'queue';
+        this.persist = (persist === undefined) ? true : persist;
+        this._recalc_on_check = (recalc_on_check === undefined) ? false : recalc_on_check;
+        this._shuffle = (shuffle === undefined) ? false : shuffle;
+        // this will set the values this._tag, this_path and this._filename
+        this._filename = this._handleFilename(values, tag, path);
+        // make the storage
+        this._store = this._makeStore(this._filename);
+        // if there are value in storage
+        // use the values form the storage and ignore the passed values
+        let valuesSaved = this._store.all();
+        if(valuesSaved.length !== 0) this._values = valuesSaved;
+        // else use the passed values, add false values to the checklist
+        else this._values = values.map(v => ({ value: v, checked: false }));
+        // make the cheklist from the values
+        this._checklist = new Map();
+        for(let v of this._values){
+            // convert value to json
+            let key = JSON.stringify(v.value);
+            // if it is not in the list, or overwrite is true
+            this._checklist.set(key, v.checked);
         }
-        // set the values, if passed
-        this._values = values ?? [];
-        // missing value are empty
-        // until the are calcualted with this._calcMissing()
-        this._missing_values = [];
-        // if checklist is empty, add values to it
-        if(this._checklist.size === 0)
-            for(let value of this._values){
-                //console.log('adding', value)
-                this._checklist.set( JSON.stringify(value), false );
-            }
-        else // if the cheklist is not empty, get the values from it
-            this._values = Array.from( this._checklist.keys() )
-                .map( JSON.parse ); 
-        // calculate the missing values
-        this._calcMissing();
-        // save new checklist
-        this._saveChecklist();
+        // update the missing values array
+        this._updateMissingValue();
     }
 
-    _saveChecklist = () => { 
-        /* this inner function saves the checklist to disk */
-        if(!this.save) return;
-        return fs.writeFileSync(this._filename, 
-            JSON.stringify(
-                Array.from( this._checklist.entries() )
-            )
-        )
-    }
-
-    save = () => this._saveChecklist();
-
-    _isObject = objValue => {
-        /* this inner function check if paramter is a js object 
-         * this is used to handle values which are not objects */
-        return ( objValue && 
-            (typeof objValue === 'object') && 
-            (objValue.constructor === Object) );
-    }
-
-    _calcMissing = () => {
+    _updateMissingValue = () => {
         /* this inner function recalcuates the missing values from the checklist */
         this._missing_values = [];
         // get the values from the checklist
@@ -115,23 +72,43 @@ class Checklist{
             if( this._checklist.get(key) === false )
                 this._missing_values.push(value)
         })
+        if(shuffle) // if shuffle is true, shuffle the values
+            this._values = [ ...this._values].sort(() => Math.random() - 0.5);
+    }
+
+    _makeStore = filename => {
+        if(!this.persist) return null;
+        return new Store(filename);
     }
 
     getCheckedValues = () =>
         /* this function returns the checked values array */
         this._values.filter(v => !this._missing_values.includes(v));
 
-    valuesDone = () => 
+    countChecked = () => 
         /* this function returns then number of values that have been checked */
         this._values.length - this._missing_values.length;
+    countDone = this.countChecked;
+    count_checked = this.countChecked;
+    count_done = this.countChecked;
+
 
     getMissingValues = () =>
         /* this function returns the missing values array */
         this._missing_values;
+    missingValues = this.getMissingValues;
+    missing_values = this.getMissingValues;
+    uncheckedValues = this.getMissingValues;
+    unchecked_values = this.getMissingValues;
 
     missingLeft = () =>
         /* return the number of missing values left */
         this._missing_values.length
+    countMissing = this.missingLeft;
+    count_missing = this.missingLeft;
+    missing_left = this.missingLeft;
+    count_unchecked = this.missingLeft;
+    countUnchecked = this.missingLeft;
 
     next = () => {
         /* returns the next missing values */
@@ -141,6 +118,10 @@ class Checklist{
         // return the value 
         return value
     }
+    nextValue = this.next;
+    next_value = this.next;
+    nextMissing = this.next;
+    next_missing = this.next;
 
     check = (values, mark = true) => {
         /* checks a list of values or a single value */
@@ -150,6 +131,7 @@ class Checklist{
         else // single file
             this._check(values, mark);
     }
+    mark = this.check;
 
     _check = (value, mark) => {
         /* checks a value on the list as done */
@@ -161,8 +143,7 @@ class Checklist{
         // recalcuate the missing value 
         if(this._recalc_on_check) this._calcMissing();
         // write to disk
-        if(this.check_call_count % this.save_every_check === 0 || this._missing_values.length === 0)
-            this._saveChecklist();
+        if(this.persist) this.store.set(key, mark);
     }
 
     uncheck = values => {
@@ -172,6 +153,7 @@ class Checklist{
         else // single file
             this._uncheck(values);
     }
+    unmark = this.uncheck;
 
     _uncheck = value => {
         /* unchecks a value on on the list which might have been done */
@@ -183,14 +165,15 @@ class Checklist{
         // recalcuate the missing value 
         if(this._recalc_on_check) this._calcMissing();
         // write to disk
-        return this._saveChecklist();
+        if(this.persist) this.store.set(key, mark);
     }
     
     /* returns all key values */
     getValues = () => this._values
+    values = this.getValues;
 
     /* returns length of all the values */
-    valuesCount = () => this._values.length
+    countValues = () => this._values.length
 
     _add = (value, overwrite = true) => {
         /* add a value as not done to the list
@@ -203,8 +186,8 @@ class Checklist{
             this._checklist.set(key, false);
         // recalcuate the missing values
         this._calcMissing();
-        // save to disk
-        return this._saveChecklist();
+        // write to disk
+        if(this.persist) this.store.set(key, mark);
     }
 
     add = (values, overwrite = true) => {
@@ -217,6 +200,8 @@ class Checklist{
             this._add(values, overwrite);
         return true;
     }
+    push = this.add;
+
 
     _remove = value => {
         /* removes the value from the list */
@@ -229,7 +214,7 @@ class Checklist{
         //  recalcuate the missing values
         this._calcMissing();
         // save to disk
-        return this._saveChecklist();
+        if(this.persist) this.store.delete(key);
     }
 
     remove = values => {
@@ -242,20 +227,32 @@ class Checklist{
             this._remove(values);
         return true;
     }
+    pop = this.remove;
 
     isChecked = value => {
         /* Checks if all value has been already been checked off */
         let key = JSON.stringify(value);
         return this._checklist.get(key);
     }
+    is_checked = this.isChecked;
 
     isDone = () =>
         /* checks if all the value on the checklist are done */
         Array.from(this._checklist.values()).every(v => v)
+    is_done = this.isDone;
+    isComplete = this.isDone;
+    is_complete = this.isDone;
+    isFinished = this.isDone;
+    is_finished = this.isDone;
 
     isNotDone = () =>
         /* checks if some value on the checklist are is not done */
         Array.from(this._checklist.values()).some(v => v === false)
+    is_not_done = this.isNotDone;
+    isNotComplete = this.isNotDone;
+    is_not_complete = this.isNotDone;
+    isNotFinished = this.isNotDone;
+    is_not_finished = this.isNotDone;
 
     delete = () =>  {
         /* delete the checklist from disk*/
@@ -291,6 +288,37 @@ class Checklist{
                     `\n`;
             })
         return str;
+    }
+    
+    _handleFilename(values, tag, path) {
+        let tmp_path = '';
+        // if it is windows, set the tmp path to the user temp folder
+        if(os.platform() === 'win32') tmp_path = os.tmpdir();
+        // if it is on linux, set the tmp path to /tmp/checklists
+        else if(os.platform() === 'linux') tmp_path = '/tmp/';
+        // if it is on mac, set the tmp path to /tmp/checklists
+        else if(os.platform() === 'darwin') tmp_path = '/tmp/';
+        // this function will take care of the filename
+        // if the use has passed a path, use that path
+        // else use the tmp path
+        // if the user has passed a tag, use that tag
+        // else use the hash of the values
+        if( typeof path === 'string' && path.length > 0 ){
+            // if path is a string, parse it
+            let { base, dir }  = parsePath(path);
+            if(base) this._tag = base;
+            if(dir){
+                // if the directory does not exist, make it
+                if(!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+                this._tmp_path = dir;
+            }
+        }else
+            // if path is not a string, make a tmp folder
+            this._tmp_path = tmp_path;
+        // handle tag
+        if(!this._tag) this._tag = hash(values, { unorderedArrays: true });
+        // finally set the filename
+        this._filename = osPath.join( this._tmp_path, this._tag);
     }
 
     log = () => console.log(this.toString())

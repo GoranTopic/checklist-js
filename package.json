@@ -27,7 +27,10 @@
   "homepage": "https://github.com/GoranTopic/checklist-js#readme",
   "dependencies": {
     "async-mutex": "^0.4.0",
+    "deasync": "^0.1.28",
     "files-js": "^1.0.1",
+    "level": "^8.0.0",
+    "lz-string": "^1.5.0",
     "object-hash": "^3.0.0",
     "tmp": "^0.2.1"
   },
